@@ -30,23 +30,25 @@ def emotion_detector(text_to_analyze):
         response = requests.post(url, json=input_json, headers=headers)
         response.raise_for_status()  # Raise an exception for HTTP errors
 
-        # Parse the raw response JSON and debug the API response
+        # Parse the response JSON
         response_data = response.json()
-        print("Raw API Response:", json.dumps(response_data, indent=4))  # Debugging
+        emotion_data = response_data.get('emotionPredictions', [])[0]['emotion']
 
-        # Extract emotion predictions
-        emotions = response_data.get('emotion_predictions', {})
-
-        # Prepare the result with required emotions and determine the dominant emotion
+        # Prepare the result with required emotions
         result = {
-            'anger': emotions.get('anger', 0),
-            'disgust': emotions.get('disgust', 0),
-            'fear': emotions.get('fear', 0),
-            'joy': emotions.get('joy', 0),
-            'sadness': emotions.get('sadness', 0),
+            'anger': emotion_data.get('anger', 0),
+            'disgust': emotion_data.get('disgust', 0),
+            'fear': emotion_data.get('fear', 0),
+            'joy': emotion_data.get('joy', 0),
+            'sadness': emotion_data.get('sadness', 0),
         }
-        result['dominant_emotion'] = max(result, key=result.get) if result else None
+
+        # Determine the dominant emotion
+        result['dominant_emotion'] = max(result, key=result.get)
         return result
+
+    except (IndexError, KeyError):
+        return {"error": "Unexpected API response structure"}
 
     except requests.exceptions.RequestException as e:
         return {"error": f"Request failed: {str(e)}"}
@@ -56,4 +58,3 @@ def emotion_detector(text_to_analyze):
 
     except Exception as e:
         return {"error": f"An unexpected error occurred: {str(e)}"}
-
